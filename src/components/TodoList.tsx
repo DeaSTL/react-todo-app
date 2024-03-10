@@ -1,90 +1,127 @@
-import { useReducer, useState } from 'react';
+import { useMemo, useReducer, useState } from 'react';
 import TodoItem from './TodoItem';
 import Table from 'react-bootstrap/Table';
 import TodoInput from './TodoInput';
-import {Card,CardBody,Container} from 'react-bootstrap';
+import { Card, CardBody, Container, FormCheck,  FormLabel } from 'react-bootstrap';
 import { Item } from '../Types';
 
-function TodoItems({items,deleteTodo,toggleDone}:any) {
-    console.log(items)
-  if(items.length > 0){
-   return (
-     <Card>
-         <CardBody>
-         <Table borderless>
-           <thead>
-             <tr>
-               <td></td>
-               <td></td>
-               <td></td>
-             </tr>
-           </thead>
-           <tbody>
-           {items.map((item:any, index:any) => (
-                 <TodoItem key={index} item={item} deleteTodo={deleteTodo} toggleDone={toggleDone}/>
-           ))}
-           </tbody>
-         </Table>
-       </CardBody>
-     </Card>
-   )
+function TodoItems({ items, deleteTodo, toggleDone, toggleImportant }: any) {
+
+  if (items.length > 0) {
+    return (
+      <>
+        {
+          items.map((item: any, index: any) => (
+            <TodoItem key={index} item={item} deleteTodo={deleteTodo} toggleDone={toggleDone} toggleImportant={toggleImportant} />
+          ))
+        }
+      </>
+    )
   }
   return ('')
 
 }
 
-function addTodo(items:Item[]) {
-  const item:Item = {
-id: Math.random() * 10000,
-    item.text,
-    status: false
-  } 
-  setItems([...items, item ]);
+type ActionProp = {
+  type: string,
+  text?: string,
+  id?: number
 }
 
-function deleteTodo (id:number) {
-  setItems(items.filter((item)=>{
-        return item.id != id
-        }))
-} 
 
-function toggleDone(id:number) {
-  let new_items = [...items]
-
-    items.map((item)=>{
-        if(item.id == id){
-        item.status = !item.status
+const reducer = (state: Item[], action: ActionProp) => {
+  switch (action.type) {
+    case "toggle":
+      return state.map((todo) => {
+        if (todo.id === action.id) {
+          return { ...todo, status: !todo.status };
+        } else {
+          return todo;
         }
-        })
-
-  setItems(new_items)
-}
-function reducer(state:any,action:any){
-  switch(action){
-    case 'add':
-      addTodo(state)
-    case 'del':
-      deleteTodo(state)
-    case 'toggle':
-      toggleDone(state)
+      });
+    case "add": {
+      const todo: Item = {
+        id: Math.random() * 69000,
+        text: action?.text as string,
+        status: false,
+        important: false
+      }
+      return [...state, todo]
+    }
+    case "toggleImportant": {
+      return state.map((todo) => {
+        if (todo.id === action.id) {
+          return { ...todo, important: !todo.important };
+        } else {
+          return todo;
+        }
+      });
+    }
+    case "delete":
+      return state.filter((item) => action?.id != item.id)
+    default:
+      return state;
   }
-}
+};
 
 function TodoList() {
-
-  const [items, setItems] = useState<Item[]>([]);
-
-
-  const [state,dispatch] = useReducer<Item[]>(reducer)
+  const [initialItems, _] = useState<Item[]>([]);
+  const [items, dispatch] = useReducer(reducer, initialItems)
 
 
+  const toggleDone = (id: number) => {
+    dispatch({ type: "toggle", id })
+  }
+  const deleteTodo = (id: number) => {
+    dispatch({ type: "delete", id })
+  }
+  const addTodo = (text: string) => {
+    dispatch({ type: "add", text })
+  }
+
+  const toggleImportant = (id: number) => {
+    dispatch({ type: "toggleImportant", id })
+  }
+
+  const [important, setImportant] = useState(false)
+  const importantItems = useMemo(() => {
+    return items.filter((item: Item) => item.important)
+
+  }, [items])
   return (
     <Container>
-      <TodoInput addTodo={addTodo}/>
-      <TodoItems items={items} deleteTodo={deleteTodo} toggleDone={toggleDone}/>
+      <TodoInput addTodo={addTodo} />
+      <Card>
+        <CardBody>
+          <Table borderless>
+            <thead>
+              <tr>
+                <td style={{gap:"1rem"}} className="d-inline-flex">
+                  <FormCheck checked={important} onChange={() => setImportant((prev: boolean) => !prev)} />
+                  <FormLabel >Done</FormLabel>
+                </td>
+                <td style={{gap:"1rem"}} className="d-inline-flex">
+                  <FormCheck checked={important} onChange={() => setImportant((prev: boolean) => !prev)} />
+                  <FormLabel >Important</FormLabel>
+                </td>
+                <td></td>
+                <td></td>
+              </tr>
+            </thead>
+            <tbody>
+              {
+                important ?
+                  <TodoItems items={importantItems} deleteTodo={deleteTodo} toggleDone={toggleDone} setImportant={setImportant} important={important} toggleImportant={toggleImportant} />
+                  :
+                  <TodoItems items={items} deleteTodo={deleteTodo} toggleDone={toggleDone} setImportant={setImportant} important={important} toggleImportant={toggleImportant} />
+              }
+            </tbody>
+          </Table>
+        </CardBody>
+      </Card>
     </Container>
   )
-      
+
 }
 
 

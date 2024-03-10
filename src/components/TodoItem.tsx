@@ -10,12 +10,13 @@ interface ITodoItem {
   item: Item,
   deleteTodo: (id:number) => void
   toggleDone: (id:number) => void
+  toggleImportant: (id:number) => void
 }
 
-function TodoItem({ item, deleteTodo, toggleDone}:ITodoItem) {
+function TodoItem({ item, deleteTodo, toggleDone,toggleImportant}:ITodoItem) {
 
+  const doneStyle = {
 
-  const doneStyles = {
       textDecoration: item.status ? 'line-through' : '',
       textDecorationThickness: item.status ? '1.5px' : '',
       color: item.status ? 'gray' : ''
@@ -26,7 +27,10 @@ function TodoItem({ item, deleteTodo, toggleDone}:ITodoItem) {
       <td>
         <FormCheck checked={item.status} onChange={()=>{toggleDone(item.id)}}/>
       </td>
-      <td style={doneStyles}>{item.text}</td>
+      <td className="mx-auto">
+        <FormCheck checked={item.important} onChange={()=>{toggleImportant(item.id)}}/>
+      </td>
+      <td style={doneStyle}>{item.text}</td>
       <td>
         <Button variant="" onClick={()=>{deleteTodo(item.id)}}>
           <FontAwesomeIcon icon={faTrash}/>
